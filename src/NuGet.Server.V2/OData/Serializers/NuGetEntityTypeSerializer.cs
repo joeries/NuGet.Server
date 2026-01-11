@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web.Http.OData;
 using System.Web.Http.OData.Extensions;
 using System.Web.Http.OData.Formatter.Serialization;
@@ -17,6 +19,8 @@ namespace NuGet.Server.V2.OData.Serializers
     public class NuGetEntityTypeSerializer
         : ODataEntityTypeSerializer
     {
+        private Regex regPort = new Regex(@"\:\d+");
+
         public NuGetEntityTypeSerializer(ODataSerializerProvider serializerProvider)
             : base(serializerProvider)
         {
@@ -25,6 +29,11 @@ namespace NuGet.Server.V2.OData.Serializers
 
         public override ODataEntry CreateEntry(SelectExpandNode selectExpandNode, EntityInstanceContext entityInstanceContext)
         {
+            var includePortInPackageId = ConfigurationManager.AppSettings["includePortInPackageId"] == "true";
+            if (!includePortInPackageId)
+            {
+                entityInstanceContext.Request.RequestUri = new Uri(regPort.Replace(entityInstanceContext.Request.RequestUri.ToString(), ""));
+            }
             var entry = base.CreateEntry(selectExpandNode, entityInstanceContext);
 
             TryAnnotateV2FeedPackage(entry, entityInstanceContext);

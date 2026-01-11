@@ -8,7 +8,8 @@ namespace NuGet.Server.Infrastructure
 {
     public class PackageUtility
     {
-        private static readonly Lazy<string> _packagePhysicalPath = new Lazy<string>(ResolvePackagePath);
+        private static readonly Lazy<string> _packagePhysicalPath = new Lazy<string>(ResolvePackagePhysicalPath);
+        private static readonly Lazy<string> _packageReletivePath = new Lazy<string>(ResolvePackageReletivePath);
 
         public static string PackagePhysicalPath
         {
@@ -18,7 +19,35 @@ namespace NuGet.Server.Infrastructure
             }
         }
 
-        private static string ResolvePackagePath()
+        public static string PackageReletivePath
+        {
+            get
+            {
+                return _packageReletivePath.Value;
+            }
+        }
+
+        private static string ResolvePackagePhysicalPath()
+        {
+            // The packagesPath could be an absolute path (rooted and use as is)
+            // or a virtual path (and use as a virtual path)
+            var path = ConfigurationManager.AppSettings["packagesPath"];
+
+            if (String.IsNullOrEmpty(PackageReletivePath))
+            {
+                // Default path
+                return HostingEnvironment.MapPath("~/Packages");
+            }
+
+            if (PackageReletivePath.StartsWith("~/"))
+            {
+                return HostingEnvironment.MapPath(PackageReletivePath);
+            }
+
+            return PackageReletivePath;
+        }
+
+        private static string ResolvePackageReletivePath()
         {
             // The packagesPath could be an absolute path (rooted and use as is)
             // or a virtual path (and use as a virtual path)
@@ -27,12 +56,7 @@ namespace NuGet.Server.Infrastructure
             if (String.IsNullOrEmpty(path))
             {
                 // Default path
-                return HostingEnvironment.MapPath("~/Packages");
-            }
-
-            if (path.StartsWith("~/"))
-            {
-                return HostingEnvironment.MapPath(path);
+                return "~/Packages";
             }
 
             return path;
