@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. 
 using System;
+using System.Configuration;
+using System.Web.Http.OData;
 
 namespace NuGet.Server
 {
@@ -21,9 +23,13 @@ namespace NuGet.Server
             var uriBuilder = new UriBuilder(currentUrl);
 
             var repositoryUrl = uriBuilder.Scheme + "://" + uriBuilder.Host;
-            if (uriBuilder.Port != 80 && uriBuilder.Port != 443)
+            var includePortInPackageId = ConfigurationManager.AppSettings["includePortInPackageId"] == "true";
+            if (includePortInPackageId)
             {
-                repositoryUrl += ":" + uriBuilder.Port;
+                if (uriBuilder.Port != 80 && uriBuilder.Port != 443)
+                {
+                    repositoryUrl += ":" + uriBuilder.Port;
+                }
             }
 
             repositoryUrl += applicationPath;
